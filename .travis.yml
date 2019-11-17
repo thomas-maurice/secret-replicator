@@ -4,8 +4,13 @@ go:
 
 services:
   - docker
+  
+before_script:
+  - os=$(go env GOOS) arch=$(go env GOARCH) curl -sL https://go.kubebuilder.io/dl/2.1.0/${os}/${arch} | tar -xz -C /tmp/
+  - os=$(go env GOOS) arch=$(go env GOARCH) sudo mv /tmp/kubebuilder_2.1.0_${os}_${arch} /usr/local/kubebuilder
 
 script:
+  - PATH=$PATH:/usr/local/kubebuilder/bin
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   - env GO111MODULE=on make docker-build
   - make docker-push
