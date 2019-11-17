@@ -1,0 +1,46 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: secret-replicator-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secret
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secret/status
+  verbs:
+  - get
+- apiGroups:
+  - replication.apis.maurice.fr
+  resources:
+  - secretreplications
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - replication.apis.maurice.fr
+  resources:
+  - secretreplications/status
+  verbs:
+  - get
+  - patch
+  - update

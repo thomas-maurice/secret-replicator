@@ -1,0 +1,7 @@
+version: "2"
+domain: apis.maurice.fr
+repo: github.com/thomas-maurice/secret-replicator
+resources:
+- group: replication
+  version: v1
+  kind: SecretReplication
