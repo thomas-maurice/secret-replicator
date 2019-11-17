@@ -11,7 +11,7 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-all: manager
+all: manager manifests distribution
 
 # Run tests
 test: generate fmt vet manifests
