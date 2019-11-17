@@ -48,8 +48,8 @@ type SecretReplicationReconciler struct {
 
 // +kubebuilder:rbac:groups=replication.apis.maurice.fr,resources=secretreplications,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=replication.apis.maurice.fr,resources=secretreplications/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=core,resources=secret,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core,resources=secret/status,verbs=get
+// +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=secrets/status,verbs=get
 
 func (r *SecretReplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
