@@ -9,6 +9,19 @@ kubectl apply -f https://raw.githubusercontent.com/thomas-maurice/secret-replica
 ```
 
 ## Adding a replication
+
+Create a sample secret:
+```
+$ kubectl create secret generic hello
+secret/hello created
+```
+
+Create the destination namespace:
+```
+$ kubectl create namespace test-replication
+namespace/test-replication created
+```
+
 Create an object as follows:
 
 ```
@@ -19,8 +32,18 @@ metadata:
 spec:
   srcNamespace: default
   dstNamespace: test-replication
-  srcName: secret
-  dstName: secret-copy
+  srcName: hello
+  dstName: hello-copy
+```
+
+`kubectl apply` it, then check the secret in the destination namespace:
+```
+$ kubectl apply -f replication.yaml
+secretreplication.replication.apis.maurice.fr/example-replication created
+$ kubectl get secrets -n test-replication
+NAME                  TYPE                                  DATA   AGE
+default-token-xprlx   kubernetes.io/service-account-token   3      84s
+hello-copy            Opaque                                0      35s
 ```
 
 The controller will check the source secret periodically and if its version has changed, will mirror the changes to the destination one.
