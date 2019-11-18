@@ -17,6 +17,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -25,10 +26,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	replicationv1 "github.com/thomas-maurice/secret-replicator/api/v1"
+)
+
+const (
+	// ControllerName is the name of the controller
+	ControllerName = "secret-replicator"
 )
 
 var (
@@ -44,6 +51,7 @@ type SecretReplicationReconciler struct {
 	Log             logr.Logger
 	Scheme          *runtime.Scheme
 	RequeueDuration time.Duration
+	EventRecorder   record.EventRecorder
 }
 
 // +kubebuilder:rbac:groups=replication.apis.maurice.fr,resources=secretreplications,verbs=get;list;watch;create;update;patch;delete
@@ -51,6 +59,7 @@ type SecretReplicationReconciler struct {
 // +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=secrets/status,verbs=get
 
+// Reconcile is the main reconciliation loop
 func (r *SecretReplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	log := r.Log.WithValues("secretreplication", req.NamespacedName)
@@ -72,6 +81,7 @@ func (r *SecretReplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, 
 	var srcSecret corev1.Secret
 	if err := r.Get(ctx, sourceSecretName, &srcSecret); err != nil {
 		log.Error(err, "Unable to fetch source secret")
+		r.EventRecorder.Event(&secretReplication, corev1.EventTypeWarning, "Unable to fetch the source secret", fmt.Sprintf("%s", err))
 		return result, err
 	}
 
@@ -98,8 +108,10 @@ func (r *SecretReplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, 
 
 			if err := r.Create(ctx, &dstSecret); err != nil {
 				log.Error(err, "unable to create replicated secret")
+				r.EventRecorder.Event(&secretReplication, corev1.EventTypeWarning, "Unable to create the replicated secret", fmt.Sprintf("%s", err))
 				return result, err
 			}
+			r.EventRecorder.Event(&secretReplication, corev1.EventTypeNormal, "Created replicated secret", "")
 		}
 	} else if err == nil {
 		if srcSecret.ResourceVersion == dstSecret.Annotations[sourceVersionAnnotation] {
@@ -115,15 +127,19 @@ func (r *SecretReplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, 
 
 		if err := r.Update(ctx, &dstSecret); err != nil {
 			log.Error(err, "Unable to update replicated secret")
+			r.EventRecorder.Event(&secretReplication, corev1.EventTypeWarning, "Failed to update replicated secret", fmt.Sprintf("%s", err))
 			return result, err
 		}
+		r.EventRecorder.Event(&secretReplication, corev1.EventTypeNormal, "Updated/synced replicated secret", "")
 	} else {
+		r.EventRecorder.Event(&secretReplication, corev1.EventTypeWarning, "Failed to update or create the replicated secret", fmt.Sprintf("%s", err))
 		return result, err
 	}
 
 	return result, nil
 }
 
+// SetupWithManager sets up the controller
 func (r *SecretReplicationReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if err := mgr.GetFieldIndexer().IndexField(&corev1.Secret{}, ownerKey, func(rawObj runtime.Object) []string {
 		// grab the secret object, extract the owner
@@ -144,6 +160,7 @@ func (r *SecretReplicationReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&replicationv1.SecretReplication{}).
 		Owns(&corev1.Secret{}).
+		Named(ControllerName).
 		Complete(r)
 }
 
