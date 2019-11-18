@@ -1,21 +1,19 @@
 language: go
 go:
-  - 1.13.3
+- 1.13.3
 env:
+  global:
   - GO111MODULE=on
   - PATH=$PATH:/usr/local/kubebuilder/bin
-
 services:
-  - docker
-
+- docker
 jobs:
   include:
-    - stage: "build"
-      script: make build-ci
-    - stage: "push"
-      script: make push-ci
-
+  - stage: build
+    script: make build-ci
+  - stage: push
+    script: make push-ci
 stages:
-  - build
-  - name: push
-    if: branch = master
+- build
+- name: push
+  if: branch = master
