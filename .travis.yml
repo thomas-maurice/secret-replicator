@@ -16,4 +16,4 @@ jobs:
 stages:
 - build
 - name: push
-  if: branch = master
+  if: branch = master AND type != pull_request
