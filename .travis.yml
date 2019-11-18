@@ -1,16 +1,21 @@
 language: go
 go:
   - 1.13.3
+env:
+  - GO111MODULE=on
+  - PATH=$PATH:/usr/local/kubebuilder/bin
 
 services:
   - docker
 
-before_script:
-  - curl -sL https://go.kubebuilder.io/dl/2.1.0/$(go env GOOS)/$(go env GOARCH) | tar -xz -C /tmp/
-  - sudo mv /tmp/kubebuilder_2.1.0_$(go env GOOS)_$(go env GOARCH) /usr/local/kubebuilder
+jobs:
+  include:
+    - stage: "build"
+      script: make build-ci
+    - stage: "push"
+      script: make push-ci
 
-script:
-  - PATH=$PATH:/usr/local/kubebuilder/bin
-  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  - env GO111MODULE=on make docker-build
-  - make docker-push
+stages:
+  - build
+  - name: push
+    if: branch = master
