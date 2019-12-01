@@ -39,7 +39,6 @@ var (
 
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
-
 	_ = replicationv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
@@ -66,17 +65,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	recorder := mgr.GetEventRecorderFor(controllers.ControllerName)
 	if err = (&controllers.SecretReplicationReconciler{
 		Client:          mgr.GetClient(),
 		Log:             ctrl.Log.WithName("controllers").WithName("SecretReplication"),
 		Scheme:          mgr.GetScheme(),
 		RequeueDuration: 30 * time.Second,
+		EventRecorder:   recorder,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "SecretReplication")
 		os.Exit(1)
 	}
-	// +kubebuilder:scaffold:builder
 
+	// +kubebuilder:scaffold:builder
 	setupLog.Info("Starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "Problem running manager")

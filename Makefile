@@ -13,6 +13,17 @@ endif
 
 all: manager manifests distribution
 
+login-ci:
+	echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+
+install-ci:
+	curl -sL https://go.kubebuilder.io/dl/2.1.0/$(shell go env GOOS)/$(shell go env GOARCH) | tar -xz -C /tmp/
+	if ! [ -d /usr/local/kubebuilder ]; then sudo mkdir /usr/local/kubebuilder; fi
+	sudo cp -r /tmp/kubebuilder_2.1.0_$(shell go env GOOS)_$(shell go env GOARCH)/bin /usr/local/kubebuilder
+
+build-ci: install-ci docker-build
+push-ci: login-ci install-ci docker-build docker-push
+
 # Run tests
 test: generate fmt vet manifests
 	go test ./... -coverprofile cover.out
