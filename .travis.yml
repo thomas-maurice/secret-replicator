@@ -1,9 +1,8 @@
 language: go
 arch:
 - amd64
-- arm64
 go:
-- 1.13.3
+- 1.15
 env:
   global:
   - GO111MODULE=on
