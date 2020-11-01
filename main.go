@@ -19,6 +19,7 @@ import (
 	"flag"
 	"os"
 	"time"
+
 	// +kubebuilder:scaffold:imports
 
 	corev1 "k8s.io/api/core/v1"
@@ -59,9 +60,11 @@ func main() {
 		MetricsBindAddress: metricsAddr,
 		LeaderElection:     enableLeaderElection,
 		Port:               9443,
+		LeaderElectionID:   "secret-replication-manager-leader",
 	})
+
 	if err != nil {
-		setupLog.Error(err, "Unable to start manager")
+		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
@@ -73,14 +76,14 @@ func main() {
 		RequeueDuration: 30 * time.Second,
 		EventRecorder:   recorder,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "Unable to create controller", "controller", "SecretReplication")
+		setupLog.Error(err, "unable to create controller", "controller", "SecretReplication")
 		os.Exit(1)
 	}
 
 	// +kubebuilder:scaffold:builder
-	setupLog.Info("Starting manager")
+	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		setupLog.Error(err, "Problem running manager")
+		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
 }
