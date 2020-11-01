@@ -57,6 +57,7 @@ type SecretReplicationReconciler struct {
 // +kubebuilder:rbac:groups=replication.apis.maurice.fr,resources=secretreplications,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=replication.apis.maurice.fr,resources=secretreplications/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=events,verbs=get;list;watch;create
 // +kubebuilder:rbac:groups=core,resources=secrets/status,verbs=get
 
 // Reconcile is the main reconciliation loop
@@ -141,7 +142,7 @@ func (r *SecretReplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, 
 
 // SetupWithManager sets up the controller
 func (r *SecretReplicationReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	if err := mgr.GetFieldIndexer().IndexField(&corev1.Secret{}, ownerKey, func(rawObj runtime.Object) []string {
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &corev1.Secret{}, ownerKey, func(rawObj runtime.Object) []string {
 		// grab the secret object, extract the owner
 		secret := rawObj.(*corev1.Secret)
 		owner := metav1.GetControllerOf(secret)
